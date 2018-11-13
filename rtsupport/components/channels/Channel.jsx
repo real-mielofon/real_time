@@ -10,7 +10,7 @@ class Channel extends Component {
 	render() {
 		const { channel } = this.props;
 		return (
-			<li>
+			<li >
 				<a onClick={this.onClick.bind(this)}>
 					{this.props.channel.name}
 				</a>

@@ -2,7 +2,7 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types';
 
 class ChannelForm extends Component {
-    onSubmit(e){
+    onSubmit(e) {
         e.preventDefault();
         const node = this.refs.channel;
         const channelName = node.value;
@@ -10,19 +10,23 @@ class ChannelForm extends Component {
         node.value = '';
     }
     render() {
-      return (
-        <form onSubmit={this.onSubmit.bind(this)}>
-            <input 
-                type="text"
-                ref="channel"
-            /> 
-        </form>
-      )
+        return (
+            <form onSubmit={this.onSubmit.bind(this)}>
+                <div className="form-group">
+                    <input
+                        className="form-control"
+                        placeholder="Add Channel"
+                        type="text"
+                        ref="channel"
+                    />
+                </div>
+            </form>
+        )
     }
 }
 
-// ChannelForm.propTypes = {
-//     addChanel: PropTypes.func.isRequired,
-// }
+ChannelForm.propTypes = {
+    addChannel: PropTypes.func.isRequired,
+}
 
 export default ChannelForm;

@@ -6,8 +6,9 @@ module.exports = {
 		filename: 'bundle.js'
 	},
 	devtool: 'inline-source-map',
+//	devtool: 'source-map'
 	devServer: {
-	  contentBase: './dist',
+	  contentBase: './',
 	  hot: true,
 	  open: true
 	},
