@@ -8,16 +8,13 @@ import ChannelList from './ChannelList.jsx';
 class ChannelSection extends Component {
     render() {
         return (
-            <div className="support panel panel-primary">
-                <div className="panel-heading">
-                <strong>Channels</strong>
+            <div className="support card">
+                <div className="card-header bg-primary text-white">
+                    <strong>Channels</strong>
                 </div>
-                <div className="panel-body channels">
-                    <ChannelList
-                        channels={this.props.channels}
-                        setChannel={this.props.setChannel}
-                    />
-                    <ChannelForm addChannel={this.props.addChannel} />
+                <div className="card-body channels">
+                    <ChannelList {...this.props}/>
+                    <ChannelForm {...this.props} />
                 </div>
             </div>
         )
@@ -27,7 +24,8 @@ class ChannelSection extends Component {
 ChannelSection.propTypes = {
     channels: PropTypes.array.isRequired,
     setChannel: PropTypes.func.isRequired,
-    addChannel: PropTypes.func.isRequired
+    addChannel: PropTypes.func.isRequired,
+    activeChannel: PropTypes.object.isRequired
 }
 
 export default ChannelSection;

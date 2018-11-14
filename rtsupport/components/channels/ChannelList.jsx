@@ -6,12 +6,13 @@ import Channel from './Channel.jsx';
 class ChannelList extends Component{
     render() {
       return (
-        <ul>{
+        <ul className="list-group">{
             this.props.channels.map(chan=>{
                 return <Channel 
                     channel={chan}
                     key={chan.id}
-                    setChannel={this.props.setChannel}/>
+                    {...this.props}
+                    />
             })
         }</ul>
       )
@@ -20,7 +21,8 @@ class ChannelList extends Component{
 
 ChannelList.propTypes = {
      channels: PropTypes.array.isRequired,
-     setChannel: PropTypes.func.isRequired
- }
+     setChannel: PropTypes.func.isRequired,
+     activeChannel: PropTypes.object.isRequired
+}
 
 export default ChannelList;

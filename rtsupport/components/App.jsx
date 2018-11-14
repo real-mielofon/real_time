@@ -1,11 +1,14 @@
+
 import React, { Component } from 'react'
 import ChannelSection from "./channels/ChannelSection.jsx";
-import Channel from './channels/Channel.jsx'
+import UserSection from './users/UserSection.jsx';
 class App extends Component {
     constructor(props){
         super(props)
         this.state = {
-            channels: []
+            channels: [],
+            users: [],
+            activeChannel:{}
         }
     }
     addChannel(name){
@@ -18,19 +21,32 @@ class App extends Component {
         this.setState({activeChannel});
         //TODO: Get Channels messages
     }
+    setUserName(userName){
+        let {users} = this.state
+        users.push({id: users.length, userName});
+        this.setState({users});
+        //TODO: Send to server
+    }
     render() {
-      return (
+      return ( 
         <div className="app">
             <div className="nav">
-            <ChannelSection 
-            channels={this.state.channels}
-            addChannel={this.addChannel.bind(this)}
-            setChannel={this.setChannel.bind(this)}
-          />
+                <ChannelSection 
+                    {...this.state}
+                    addChannel={this.addChannel.bind(this)}
+                    setChannel={this.setChannel.bind(this)}
+                />
+                <UserSection
+                    {...this.state}
+                    setUserName={this.setUserName.bind(this)}
+                    />
             </div>
         </div>  
       )
     }
 }
+
+/*
+*/
 
 export default App;
