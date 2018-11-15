@@ -9,7 +9,7 @@ class UserList extends Component{
         <ul className="list-group">{
             this.props.users.map(user=>{
                 return <User 
-                    user={user.userName}
+                    user={user.name}
                     key={user.id}
                     {...this.props}
                     />
