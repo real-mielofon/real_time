@@ -3,92 +3,126 @@ import React, { Component } from 'react'
 import ChannelSection from "./channels/ChannelSection.jsx";
 import UserSection from './users/UserSection.jsx';
 import MessageSection from './messages/MessageSection.jsx';
+import Socket from '../socket.js'
 class App extends Component {
-    constructor(props){
+    constructor(props) {
         super(props)
         this.state = {
             channels: [],
             users: [],
-            activeChannel:{},
+            activeChannel: {},
             messages: [],
             connected: false
         }
     }
-    addChannel(name){
-        let {channels} = this.state;
-        channels.push({id: channels.length, name}) ;
-        this.setState({channels});
-        //TODO: Sent to server
-        let msg = {
-            name:"channel add",
-            data:{
-                id: channels.length,
-                name
+    componentDidMount() {
+        let socket = this.socket = new Socket();
+        socket.on('connect', this.onConnect.bind(this));
+        socket.on('disconnect', this.onDisconnect.bind(this));
+        
+        socket.on('channel add', this.onAddChannel.bind(this));
+        
+        socket.on('user add', this.onAddUser.bind(this));
+        socket.on('user edit', this.onEditUser.bind(this));
+        socket.on('user remove', this.onRemoveUser.bind(this));
+
+        socket.on('message add', this.onAddMessage.bind(this))
+    }
+    onAddMessage(message) {
+        let { messages } = this.state;
+        messages.push(message);
+        this.setState({ messages });
+    }
+
+    onRemoveUser(removeUser) {
+        let { user } = this.state;
+        users = users.filter(user => {
+            return user.id !== removeUser.id;
+        });
+        this.setState({ users });
+    }
+    onEditUser(editUser) {
+        let { user } = this.state;
+        users = users.map(user => {
+            if (user.id === editUser.id) {
+                return editUser
             }
-        }
-        this.ws.send(JSON.stringify(msg));
+            return user;
+        });
+        this.setState({ users });
     }
-    setChannel(activeChannel){
-        this.setState({activeChannel});
-        //TODO: Get Channels messages
+    onAddUser(user) {
+        let { users } = this.state;
+        users.push(user);
+        this.setState({ users });
     }
-    setUserName(name){
-        let {users} = this.state
-        users.push({id: users.length, name});
-        this.setState({users});
-        //TODO: Send to server
+    onConnect() {
+        this.setState({ connected: true });
+        this.socket.emit('channel subscribe')
+        this.socket.emit('user subscribe')
     }
-    addMessage(body){
-        let {messages, users} = this.state
-        let createdAt = new Date;
-        let author=users.length>0?users[0].name : "anaonymouse";
-        messages.push({id: messages.length, body, createdAt, author});
-        this.setState({messages});
-        //TODO: Send to server
+    onDisconnect() {
+        this.setState({ connected: false });
     }
-    componentDidMount(){
-        let ws = this.ws = new WebSocket('ws://echo.websocket.org');
-        ws.onmessage = this.message.bind(this);
-        ws.onopen = this.open.bind(this);
-        ws.onclose = this.close.bind(this);
-    }
-    open(){
-        this.setState({connected: true})
-    }
-    message(e){
-        const event = JSON.parse(e.data);
-        if(event.name ==='channel add'){
-            this.newChannel(event.data)
-        }
-    }
-    newChannel(){
-        let {channels} = this.state;
-        channels.push(channel)
+    onAddChannel(channel) {
+        let { channels } = this.state;
+        channels.push(channel);
         this.setState({channels})
     }
-    close(){
-        this.setState({connected: false})
+    addChannel(name) {
+        let { channels } = this.state;
+        this.socket.emit('channel add', { name });
+    }
+    setChannel(activeChannel) {
+        this.setState({ activeChannel });
+        this.socket.emit('message unsubscribe');
+        this.setState({messages: []});
+        this.socket.emit('message subscribe',
+            {channelId: activeChannel.id});
+    }
+    setUserName(name) {
+        this.socket.emit('user edit', { name });
+    }
+
+    addMessage(body) {
+        let { activeChannel } = this.state
+        this.socket.emit('message add', 
+            {channelId: activeChannel.id, body});
     }
     render() {
-      return ( 
-        <div className="app">
-            <div className="nav">
-                <ChannelSection 
-                    {...this.state}
-                    addChannel={this.addChannel.bind(this)}
-                    setChannel={this.setChannel.bind(this)}
-                />
-                <UserSection
-                    {...this.state}
-                    setUserName={this.setUserName.bind(this)}
-                    />
+        return (
+
+            <div className="container-fluid">
+                <div className="row">
+                    <div className="col-md-2">
+                        <div className="row">
+                            <div className="col-md-12">
+                                <ChannelSection
+                                    {...this.state}
+                                    addChannel={this.addChannel.bind(this)}
+                                    setChannel={this.setChannel.bind(this)}
+                                />
+
+                            </div>
+                        </div>
+                        <div className="row">
+                            <div className="col-md-12">
+                                <UserSection
+                                    {...this.state}
+                                    setUserName={this.setUserName.bind(this)}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                    <div className="col-md-10">
+                        <MessageSection
+                            {...this.state}
+                            addMessage={this.addMessage.bind(this)}
+                        />
+                    </div>
+                </div>
             </div>
-            <MessageSection
-                {...this.state}
-                addMessage={this.addMessage.bind(this)}
-            />
-        </div>  
-      )
+        )
     }
 }
 
