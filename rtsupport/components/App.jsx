@@ -16,7 +16,9 @@ class App extends Component {
         }
     }
     componentDidMount() {
-        let socket = this.socket = new Socket();
+        let ws = new WebSocket('ws://localhost:4000')
+        let socket = this.socket = new Socket(ws);
+
         socket.on('connect', this.onConnect.bind(this));
         socket.on('disconnect', this.onDisconnect.bind(this));
         
@@ -35,14 +37,14 @@ class App extends Component {
     }
 
     onRemoveUser(removeUser) {
-        let { user } = this.state;
+        let { users } = this.state;
         users = users.filter(user => {
             return user.id !== removeUser.id;
         });
         this.setState({ users });
     }
     onEditUser(editUser) {
-        let { user } = this.state;
+        let { users } = this.state;
         users = users.map(user => {
             if (user.id === editUser.id) {
                 return editUser
@@ -70,7 +72,6 @@ class App extends Component {
         this.setState({channels})
     }
     addChannel(name) {
-        let { channels } = this.state;
         this.socket.emit('channel add', { name });
     }
     setChannel(activeChannel) {

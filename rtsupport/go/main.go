@@ -1,22 +1,21 @@
 package main
 
 import (
-	"time"
-	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/gorilla/websocket"
-	"github.com/mitchellh/mapstructure"
+	r "github.com/rethinkdb/rethinkdb-go"
 )
 
-type Message struct {
-	Name string      `json:"name"`
-	Data interface{} `json:"data"`
+type Channel struct {
+	Id   string `json:"id" gorethink:"id,omitempty"`
+	Name string `json:"name" gorethink:"name"`
 }
 
-type Channel struct {
-	Id   string `json:"id"`
-	Name string `json:"name"`
+type User struct {
+	Id   string `gorethink:"id,omitempty"`
+	Name string `gorethink:"name"`
 }
 
 var upgrader = websocket.Upgrader{
@@ -25,74 +24,32 @@ var upgrader = websocket.Upgrader{
 	CheckOrigin:     func(r *http.Request) bool { return true },
 }
 
-
-func handler(w http.ResponseWriter, r *http.Request) {
-	socket, err := upgrader.Upgrade(w, r, nil)
+func main() {
+	session, err := r.Connect(r.ConnectOpts{
+		Address:  "localhost:28015",
+		Database: "rtsupport",
+	})
 	if err != nil {
-		fmt.Println(err)
+		log.Panic(err.Error())
 		return
 	}
-	for {
-		// msgType, msg, err := socket.ReadMessage()
-		// if err != nil {
-		// 	fmt.Println(err)
-		// 	return
-		// }
-		var inMessage Message
-		var outMessage Message
-		if err := socket.ReadJSON(&Message); err != nil {
-			fmt.Println(err)
-			break
-		}
-		fmt.Printf("%#v\n", inMessage)
-		switch inMessage.Name {
-		case "channel add":
-			err := addChannel(inMessage.Data)
-			if err != nil {
-				outMessage := Message{"error", err}
-				if err := socket.WriteJSON(otMessage); err != nil {
-					fmt.Println(err)
-					break
-				}
-			}
-		case "channel subscribe":
-			subscribeChannel(inMessage.Data)
-		}
-		// fmt.Printf("msgType: %d, msg: %v\n", msgType, string(msg))
-		// if err = socket.WriteMessage(msgType, msg); err != nil {
-		// 	fmt.Println(err)
-		// 	return
-		// }
-	}
-}
 
-func addChannel(data interface{}) error {
-	var channel Channel
-	err := mapstructure.Decode(data, &channel)
-	if err != nil {
-		return err
-	}
-	channel.Id = "1"
-	fmt.Printf("%#v\n", channel)
-	fmt.Println("added channel")
-	return nil
-}
+	router := NewRouter(session)
 
-func subscribeChannel()  {
-	//TODO: rethinkDB query
-	for{
-		time.Sleep(time.Second*1)
-		message := Message{"channel add",
-			Channel{"1","Software Support"}
-		}
-		socket.WriteJSON(message)
-		fmt.Println("sent new channel")
-	} 
-}
+	router.Handle("channel add", addChannel)
+	router.Handle("channel subscribe", subscribeChannel)
+	router.Handle("channel unsubscribe", unsubscribeChannel)
 
-func main() {
-	router := NewRouter()
-	router.Handel("channel add", addChannel)
+	router.Handle("user edit", editUser)
+	router.Handle("user subscribe", subscribeUser)
+	router.Handle("user unsubscribe", unsubscribeUser)
+	/*
+		router.Handle("message add", addMessage)
+		router.Handle("message subscribe", subscribeMessage)
+		router.Handle("message unsubscribe", unsubscribeMessage)
+	*/
+
 	http.Handle("/", router)
+	log.Println("http://localhost:4000 started!")
 	http.ListenAndServe(":4000", nil)
 }
