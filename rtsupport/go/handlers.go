@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"time"
 
 	"github.com/mitchellh/mapstructure"
 	r "github.com/rethinkdb/rethinkdb-go"
@@ -111,6 +112,54 @@ func editUser(client *Client, data interface{}) {
 		err = r.Table("user").
 			Get(client.id).
 			Update(user).
+			Exec(client.session)
+		if err != nil {
+			client.send <- Message{"error", err.Error()}
+		}
+	}()
+}
+
+func subscribeMessage(client *Client, data interface{}) {
+	log.Println("ws in subscribeMessage")
+	val, ok := (data.(map[string]interface{}))["channelId"]
+	if !ok {
+		return
+	}
+	channelId, ok := val.(string)
+	if !ok {
+		return
+	}
+
+	stop := client.NewStopChannel(MessageStop)
+	cursor, err := r.Table("message").
+		OrderBy(r.OrderByOpts{Index: r.Desc("createtAt")}).
+		Filter(r.Row.Field("channelId").Eq(channelId)).
+		Changes(r.ChangesOpts{IncludeInitial: true}).
+		Run(client.session)
+	if err != nil {
+		client.send <- Message{"error", err.Error()}
+		return
+	}
+
+	changeFeedHelper(cursor, "message", client.send, stop)
+}
+
+func unsubscribeMessage(client *Client, data interface{}) {
+	client.StopForKey(MessageStop)
+}
+
+func addMessage(client *Client, data interface{}) {
+	var message MessageChat
+	err := mapstructure.Decode(data, &message)
+	if err != nil {
+		client.send <- Message{"error", err.Error()}
+		return
+	}
+	go func() {
+		message.CreatedAt = time.Now()
+		message.Author = client.userName
+		err = r.Table("message").
+			Insert(message).
 			Exec(client.session)
 		if err != nil {
 			client.send <- Message{"error", err.Error()}

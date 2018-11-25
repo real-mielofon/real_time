@@ -5,7 +5,11 @@ import fecha from 'fecha'
 class Message extends Component {
     render() {
         let {message} = this.props
-        let createdAt = fecha.format(message.createdAt, " HH:mm:ss ddd MMM DD YYYY")
+        console.log("render message = "+message)
+        let createdAtTime = fecha.parse(message.createdAt, "YYYY-MM-DDTHH:mm:ss.SSSZZ")
+        let createdAt = fecha.format(createdAtTime, "YYYY-MM-DD hh:mm:ss")
+//        let createdAt = message.createdAt
+        console.log("render message created = "+createdAt)
         return (
             <li className="message">
                 <div className="author">

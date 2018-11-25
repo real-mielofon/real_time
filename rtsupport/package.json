@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "build": "webpack --mode production",
-    "dev": "webpack-dev-server --mode development --hot --inline"
+    "dev": "webpack-dev-server --mode development --hot --inline",
+    "db": "rethinkdb.exe -d ./data/"
   },
   "author": "Alexey Ponomarev <mielofon@gmail.com>",
   "license": "MIT",
